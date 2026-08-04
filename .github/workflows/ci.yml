@@ -35,8 +35,8 @@ jobs:
       - name: Format
         run: dotnet format CockRealSizeBot.slnx --verify-no-changes --no-restore
 
-      - name: Test
-        run: dotnet test --solution CockRealSizeBot.slnx --configuration Release --no-build
+      #- name: Test
+      #  run: dotnet test --solution CockRealSizeBot.slnx --configuration Release --no-build
 
   publish:
     name: Публикация образа

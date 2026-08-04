@@ -27,12 +27,12 @@ internal static class MeasurementCard
             .Append(" у меня ")
             .Append(result.Centimeters)
             .Append(" см ")
-            .AppendLine(result.Emoji)
-            .AppendLine()
-            .AppendLine(RenderRuler(result.Centimeters))
-            .AppendLine()
-            .Append("Звание: ")
-            .Append(result.Rank);
+            .AppendLine(result.Emoji);
+            // .AppendLine()
+            // .AppendLine(RenderRuler(result.Centimeters))
+            // .AppendLine()
+            // .Append("Звание: ")
+            // .Append(result.Rank);
 
         return card.ToString();
     }
