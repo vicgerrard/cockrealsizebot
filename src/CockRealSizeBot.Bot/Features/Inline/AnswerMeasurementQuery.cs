@@ -13,7 +13,6 @@ namespace CockRealSizeBot.Bot.Features.Inline;
 internal sealed partial class AnswerMeasurementQuery(
     ITelegramBotClient bot,
     MeasureUser.Handler measure,
-    DailyCycle cycle,
     ILogger<AnswerMeasurementQuery> logger)
 {
     /// <summary>
@@ -36,6 +35,12 @@ internal sealed partial class AnswerMeasurementQuery(
         await bot.AnswerInlineQuery(
             query.Id,
             [article],
+            // Ноль передаётся явно: если cacheTime не отправить, Telegram применит
+            // свой дефолт в 300 секунд.
+            cacheTime: 0,
+            // Без этого флага кэш у Telegram общий: результат, отданный одному
+            // пользователю, показывается всем, кто набрал тот же запрос.
+            isPersonal: true,
             cancellationToken: cancellationToken);
 
         LogMeasured(logger, query.From.Id, result.Centimeters, result.Nickname);
@@ -45,11 +50,4 @@ internal sealed partial class AnswerMeasurementQuery(
         Level = LogLevel.Information,
         Message = "Замер для пользователя {UserId}: {Centimeters} см ({Nickname})")]
     private static partial void LogMeasured(ILogger logger, long userId, int centimeters, string nickname);
-
-    /// <summary>
-    /// Кэшируем ответ ровно до полуночи: до неё результат всё равно не изменится,
-    /// а после — обязан. Так суточный кулдаун соблюдается ещё и на стороне Telegram.
-    /// </summary>
-    private int CacheSecondsUntilNextDay() =>
-        (int)Math.Clamp(cycle.UntilNextDay().TotalSeconds, 1, TimeSpan.FromDays(1).TotalSeconds);
 }

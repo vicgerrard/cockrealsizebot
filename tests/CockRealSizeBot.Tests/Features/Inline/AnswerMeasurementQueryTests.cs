@@ -37,15 +37,32 @@ public sealed class AnswerMeasurementQueryTests
     }
 
     [Fact]
-    public async Task Answer_is_cached_exactly_until_local_midnight()
+    public async Task Answer_disables_the_telegram_cache_explicitly()
     {
-        // 21:00 МСК — до полуночи три часа.
-        var clock = TestSubjects.Clock(new DateTimeOffset(2026, 8, 4, 18, 0, 0, TimeSpan.Zero));
-        var (bot, handler, _) = Arrange(clock);
+        var (bot, handler, _) = Arrange();
 
         await handler.HandleAsync(InlineQueryFrom(UserId), TestContext.Current.CancellationToken);
 
-        Assert.Equal((int)TimeSpan.FromHours(3).TotalSeconds, bot.SingleRequest<AnswerInlineQueryRequest>().CacheTime);
+        // Не «null», а именно ноль: неотправленный cacheTime Telegram трактует как 300 секунд,
+        // и ответ одного пользователя пять минут показывается всем остальным.
+        Assert.Equal(0, bot.SingleRequest<AnswerInlineQueryRequest>().CacheTime);
+    }
+
+    [Fact]
+    public async Task Every_user_is_answered_with_his_own_card()
+    {
+        var (bot, handler, _) = Arrange();
+
+        foreach (var id in Enumerable.Range(1, 20))
+        {
+            await handler.HandleAsync(InlineQueryFrom(id), TestContext.Current.CancellationToken);
+        }
+
+        var cards = bot.RequestsOf<AnswerInlineQueryRequest>().Select(CardOf).Distinct().ToList();
+
+        // Совпадения возможны — шкала конечная, — но одна карточка на всех означала бы,
+        // что замер перестал зависеть от автора запроса.
+        Assert.True(cards.Count > 5, $"На 20 пользователей всего {cards.Count} различных карточек");
     }
 
     [Fact]
@@ -56,10 +73,7 @@ public sealed class AnswerMeasurementQueryTests
         await handler.HandleAsync(InlineQueryFrom(UserId, query: "999999"), TestContext.Current.CancellationToken);
         await handler.HandleAsync(InlineQueryFrom(UserId, query: string.Empty), TestContext.Current.CancellationToken);
 
-        var cards = bot.RequestsOf<AnswerInlineQueryRequest>()
-            .Select(request => ((InputTextMessageContent)((InlineQueryResultArticle)request.Results.Single()).InputMessageContent!).MessageText)
-            .Distinct()
-            .ToList();
+        var cards = bot.RequestsOf<AnswerInlineQueryRequest>().Select(CardOf).Distinct().ToList();
 
         Assert.Single(cards);
     }
@@ -74,18 +88,14 @@ public sealed class AnswerMeasurementQueryTests
         Assert.Equal("query-1", bot.SingleRequest<AnswerInlineQueryRequest>().InlineQueryId);
     }
 
-    private static (FakeTelegramBotClient Bot, AnswerMeasurementQuery Handler, MeasureUser.Result Expected) Arrange(
-        TimeProvider? clock = null)
-    {
-        clock ??= TestSubjects.Clock();
+    private static string CardOf(AnswerInlineQueryRequest request) =>
+        ((InputTextMessageContent)((InlineQueryResultArticle)request.Results.Single()).InputMessageContent!).MessageText;
 
+    private static (FakeTelegramBotClient Bot, AnswerMeasurementQuery Handler, MeasureUser.Result Expected) Arrange()
+    {
         var bot = new FakeTelegramBotClient();
-        var measure = TestSubjects.Handler(clock);
-        var handler = new AnswerMeasurementQuery(
-            bot,
-            measure,
-            TestSubjects.Cycle(clock),
-            NullLogger<AnswerMeasurementQuery>.Instance);
+        var measure = TestSubjects.Handler(TestSubjects.Clock());
+        var handler = new AnswerMeasurementQuery(bot, measure, NullLogger<AnswerMeasurementQuery>.Instance);
 
         return (bot, handler, measure.Measure(new MeasureUser.Query(UserId)));
     }

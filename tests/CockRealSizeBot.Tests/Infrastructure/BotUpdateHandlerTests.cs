@@ -93,7 +93,6 @@ public sealed class BotUpdateHandlerTests
         var inline = new AnswerMeasurementQuery(
             bot,
             TestSubjects.Handler(clock),
-            TestSubjects.Cycle(clock),
             NullLogger<AnswerMeasurementQuery>.Instance);
 
         var start = new AnswerStartCommand(bot, new BotIdentity(bot), NullLogger<AnswerStartCommand>.Instance);

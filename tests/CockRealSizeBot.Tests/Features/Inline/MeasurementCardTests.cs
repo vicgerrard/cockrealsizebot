@@ -16,27 +16,13 @@ public sealed class MeasurementCardTests
     }
 
     [Fact]
-    public void Card_ends_on_the_rank()
+    public void Card_is_a_single_line()
     {
+        // Карточка намеренно короткая: ни линейки, ни строки со званием,
+        // ни обещания «завтра» — она уходит в чат и живёт там вечно.
         var card = MeasurementCard.Render(new MeasureUser.Result(23, "Лоллипап", "Тяжёлая артиллерия", "😯"));
 
-        // Про кулдаун в карточке не пишем — она уходит в чат и живёт там вечно,
-        // а «завтра» через сутки станет враньём.
-        Assert.EndsWith("Звание: Тяжёлая артиллерия", card, StringComparison.Ordinal);
-    }
-
-    [Theory]
-    [InlineData(1)]
-    [InlineData(18)]
-    [InlineData(35)]
-    public void Ruler_length_matches_the_result(int centimeters)
-    {
-        var card = MeasurementCard.Render(new MeasureUser.Result(centimeters, "Кто-то", "Звание", "🙂"));
-
-        var ruler = card.Split(Environment.NewLine).Single(line => line.Contains('▶', StringComparison.Ordinal));
-
-        Assert.Equal(centimeters, ruler.Count(symbol => symbol == '▬'));
-        Assert.EndsWith("▶", ruler, StringComparison.Ordinal);
+        Assert.Single(card.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries));
     }
 
     [Fact]

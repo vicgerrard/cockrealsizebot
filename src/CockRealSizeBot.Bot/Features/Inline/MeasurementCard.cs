@@ -15,9 +15,6 @@ internal static class MeasurementCard
     /// <summary>Подпись под заголовком. Результат намеренно не раскрываем — вся соль в чате.</summary>
     public const string ResultDescription = "Результат появится в чате";
 
-    private const char FilledSegment = '▬';
-    private const char Tip = '▶';
-
     /// <summary>Текст, который улетит в чат от имени пользователя.</summary>
     public static string Render(MeasureUser.Result result)
     {
@@ -30,14 +27,5 @@ internal static class MeasurementCard
             .AppendLine(result.Emoji);
 
         return card.ToString();
-    }
-
-    private static string RenderRuler(int centimeters)
-    {
-        var ruler = new StringBuilder(centimeters + 1);
-
-        ruler.Append(FilledSegment, centimeters).Append(Tip);
-
-        return ruler.ToString();
     }
 }
