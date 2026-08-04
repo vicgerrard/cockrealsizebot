@@ -1,4 +1,5 @@
 using CockRealSizeBot.Bot.Features.Inline;
+using CockRealSizeBot.Bot.Features.Start;
 using Telegram.Bot;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
@@ -11,6 +12,7 @@ namespace CockRealSizeBot.Bot.Infrastructure.Polling;
 /// </summary>
 internal sealed partial class BotUpdateHandler(
     AnswerMeasurementQuery inlineMeasurement,
+    AnswerStartCommand startScreen,
     ILogger<BotUpdateHandler> logger) : IUpdateHandler
 {
     /// <summary>Пауза после сетевой ошибки, чтобы не молотить API в цикле.</summary>
@@ -24,6 +26,15 @@ internal sealed partial class BotUpdateHandler(
         if (update.InlineQuery is { } inlineQuery)
         {
             await inlineMeasurement.HandleAsync(inlineQuery, cancellationToken);
+            return;
+        }
+
+        // В личке отвечаем на любой текст, не только на /start: человек, который
+        // пишет боту вручную, всё равно не понимает, что тот работает через inline.
+        // В группах молчим — там бот вызывается только упоминанием.
+        if (update.Message is { Chat.Type: ChatType.Private, Text.Length: > 0 } message)
+        {
+            await startScreen.HandleAsync(message, cancellationToken);
             return;
         }
 

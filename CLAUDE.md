@@ -42,7 +42,11 @@ src/CockRealSizeBot.Bot/
     Inline/                       — ответ на inline-запрос
       MeasurementCard.cs          — все пользовательские тексты
       AnswerMeasurementQuery.cs   — обработчик
+    Start/                        — экран приветствия в личке
+      StartMessages.cs            — тексты
+      AnswerStartCommand.cs       — обработчик, кнопка switch_inline_query
   Infrastructure/
+    BotIdentity.cs                — @username бота, забирается getMe один раз
     Polling/                      — long polling и роутинг апдейтов
 tests/CockRealSizeBot.Tests/
   TestSubjects.cs                 — сборка объектов под тест
@@ -85,6 +89,12 @@ tests/CockRealSizeBot.Tests/
   суточный кулдаун и появляется возможность «измерить» кого-то без его участия.
 - **Шкала 1–35 см, распределение колоколом** (среднее трёх равномерных величин).
   Пик приходится на 17–20 см, края выпадают редко — в этом и шутка.
+
+### Что бот обрабатывает
+
+`AllowedUpdates` — только `InlineQuery` и `Message`. В личке на любой текст (не только
+на `/start`) приходит экран приветствия с кнопкой `switch_inline_query`. В группах бот
+молчит: там он вызывается исключительно упоминанием в inline-режиме.
 
 ### Как устроен ответ
 
@@ -162,10 +172,22 @@ dotnet publish src/CockRealSizeBot.Bot -c Release -r linux-x64 --self-contained 
 
 ## Настройка бота в BotFather
 
-Inline-режим по умолчанию выключен. Без этого inline-запросы просто не придут:
+| Команда | Нужно | Зачем |
+| --- | --- | --- |
+| `/setinline` | **обязательно** | Inline-режим выключен по умолчанию, без него запросы не придут вообще |
+| `/setdescription` | да | Текст на пустом экране чата |
+| `/setabouttext` | да | Строка в профиле, до 120 символов |
+| `/setuserpic` | да | По аватарке бота узнают в списке inline-ботов |
+| `/setjoingroups` → Disable | да | Inline работает без добавления в группу; запрет убирает бессмысленный сценарий |
+| `/setcommands` | опционально | Работает только `/start`; Telegram и так показывает кнопку Start |
+| `/setinlinefeedback` | нет | Нужна только для `ChosenInlineResult`, мы его не запрашиваем |
+| `/setinlinegeo` | нет | Геолокация не используется |
 
-1. `/setinline` → выбрать бота → задать placeholder (например, «измерить»).
-2. `/setinlinefeedback` → `Enabled`, если понадобится статистика по выбранным результатам.
+Placeholder задаётся внутри диалога `/setinline` — серый текст в поле ввода после
+упоминания бота.
+
+После `/setinline` клиент Telegram иногда показывает inline-подсказки не сразу.
+Пустая выпадашка после запуска — сначала перезапустить клиент, потом лезть в логи.
 
 ---
 

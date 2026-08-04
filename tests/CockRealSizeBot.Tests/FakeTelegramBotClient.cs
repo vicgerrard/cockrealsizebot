@@ -1,6 +1,7 @@
 using Telegram.Bot;
 using Telegram.Bot.Args;
 using Telegram.Bot.Exceptions;
+using Telegram.Bot.Requests;
 using Telegram.Bot.Requests.Abstractions;
 using Telegram.Bot.Types;
 
@@ -30,11 +31,25 @@ internal sealed class FakeTelegramBotClient : ITelegramBotClient
     public event AsyncEventHandler<ApiResponseEventArgs>? OnApiResponseReceived;
 #pragma warning restore CS0067
 
+    /// <summary>Ответ на getMe. Из него берётся @username для текстов.</summary>
+    public User Me { get; init; } = new()
+    {
+        Id = 424242,
+        IsBot = true,
+        FirstName = "Тестовый бот",
+        Username = "test_size_bot",
+    };
+
     public Task<TResponse> SendRequest<TResponse>(
         IRequest<TResponse> request,
         CancellationToken cancellationToken = default)
     {
         SentRequests.Add(request);
+
+        if (request is GetMeRequest)
+        {
+            return Task.FromResult((TResponse)(object)Me);
+        }
 
         return Task.FromResult<TResponse>(default!);
     }
@@ -48,5 +63,7 @@ internal sealed class FakeTelegramBotClient : ITelegramBotClient
         Task.CompletedTask;
 
     /// <summary>Единственный отправленный запрос ожидаемого типа.</summary>
-    public TRequest SingleRequest<TRequest>() => Assert.IsType<TRequest>(Assert.Single(SentRequests));
+    public TRequest SingleRequest<TRequest>() => Assert.Single(SentRequests.OfType<TRequest>());
+
+    public IReadOnlyList<TRequest> RequestsOf<TRequest>() => [.. SentRequests.OfType<TRequest>()];
 }

@@ -21,7 +21,7 @@ internal sealed partial class BotPollingService(
         var receiverOptions = new ReceiverOptions
         {
             // Просим у Telegram только то, что умеем обрабатывать.
-            AllowedUpdates = [UpdateType.InlineQuery],
+            AllowedUpdates = [UpdateType.InlineQuery, UpdateType.Message],
 
             // Апдейты, накопившиеся пока бот лежал, уже неактуальны:
             // inline-запрос живёт секунды.

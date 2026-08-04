@@ -21,6 +21,7 @@ internal static class TelegramRegistration
                 return new TelegramBotClient(options.Token, httpClient);
             });
 
+        services.AddSingleton<BotIdentity>();
         services.AddSingleton<BotUpdateHandler>();
         services.AddHostedService<BotPollingService>();
 

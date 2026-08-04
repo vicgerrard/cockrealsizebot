@@ -56,8 +56,7 @@ public sealed class AnswerMeasurementQueryTests
         await handler.HandleAsync(InlineQueryFrom(UserId, query: "999999"), TestContext.Current.CancellationToken);
         await handler.HandleAsync(InlineQueryFrom(UserId, query: string.Empty), TestContext.Current.CancellationToken);
 
-        var cards = bot.SentRequests
-            .Cast<AnswerInlineQueryRequest>()
+        var cards = bot.RequestsOf<AnswerInlineQueryRequest>()
             .Select(request => ((InputTextMessageContent)((InlineQueryResultArticle)request.Results.Single()).InputMessageContent!).MessageText)
             .Distinct()
             .ToList();
