@@ -38,13 +38,13 @@ internal sealed partial class AnswerMeasurementQuery(
             [article],
             cancellationToken: cancellationToken);
 
-        LogMeasured(logger, query.From.Id, result.Centimeters, result.Rank);
+        LogMeasured(logger, query.From.Id, result.Centimeters, result.Nickname);
     }
 
     [LoggerMessage(
         Level = LogLevel.Information,
-        Message = "Замер для пользователя {UserId}: {Centimeters} см ({Rank})")]
-    private static partial void LogMeasured(ILogger logger, long userId, int centimeters, string rank);
+        Message = "Замер для пользователя {UserId}: {Centimeters} см ({Nickname})")]
+    private static partial void LogMeasured(ILogger logger, long userId, int centimeters, string nickname);
 
     /// <summary>
     /// Кэшируем ответ ровно до полуночи: до неё результат всё равно не изменится,
