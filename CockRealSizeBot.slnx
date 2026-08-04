@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CockRealSizeBot.Bot/CockRealSizeBot.Bot.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CockRealSizeBot.Tests/CockRealSizeBot.Tests.csproj" />
+  </Folder>
+</Solution>

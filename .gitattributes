@@ -1,0 +1,19 @@
+# В репозитории всё хранится с LF, в рабочей копии Git разворачивает под платформу.
+* text=auto
+
+*.cs        text diff=csharp
+*.csproj    text
+*.slnx      text
+*.props     text
+*.json      text
+*.md        text
+*.yml       text
+*.yaml      text
+*.sh        text eol=lf
+*.ps1       text eol=crlf
+
+*.png       binary
+*.jpg       binary
+*.gif       binary
+*.ico       binary
+*.snk       binary
