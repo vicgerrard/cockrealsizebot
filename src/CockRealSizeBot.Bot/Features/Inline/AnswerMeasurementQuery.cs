@@ -36,10 +36,6 @@ internal sealed partial class AnswerMeasurementQuery(
         await bot.AnswerInlineQuery(
             query.Id,
             [article],
-            cacheTime: CacheSecondsUntilNextDay(),
-            // Результат зависит от пользователя — Telegram не должен показывать
-            // чужой ответ из общего кэша.
-            isPersonal: true,
             cancellationToken: cancellationToken);
 
         LogMeasured(logger, query.From.Id, result.Centimeters, result.Rank);
