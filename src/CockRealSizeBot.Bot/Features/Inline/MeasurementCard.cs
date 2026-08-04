@@ -28,11 +28,6 @@ internal static class MeasurementCard
             .Append(result.Centimeters)
             .Append(" см ")
             .AppendLine(result.Emoji);
-            // .AppendLine()
-            // .AppendLine(RenderRuler(result.Centimeters))
-            // .AppendLine()
-            // .Append("Звание: ")
-            // .Append(result.Rank);
 
         return card.ToString();
     }
