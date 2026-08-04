@@ -1,10 +1,12 @@
 name: CI
 
 on:
+  # Обе ветки перечислены намеренно: репозиторий живёт на master, но при
+  # переименовании в main CI не должен молча перестать запускаться.
   push:
-    branches: [main]
+    branches: [main, master]
   pull_request:
-    branches: [main]
+    branches: [main, master]
 
 env:
   REGISTRY: ghcr.io
@@ -38,7 +40,7 @@ jobs:
   publish:
     name: Публикация образа
     needs: test
-    # Пул-реквесты образ не публикуют — только main.
+    # Пул-реквесты образ не публикуют — только пуш в основную ветку.
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
 
