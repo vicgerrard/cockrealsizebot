@@ -162,11 +162,62 @@ dotnet run --project src/CockRealSizeBot.Bot
 Имена тестов — `Method_does_something_when_condition`, подчёркивания разрешены:
 CA1707 отключён для всего `tests/` в `tests/Directory.Build.props`.
 
-Публикация на VPS (linux-x64, запуск под systemd):
+---
+
+## Деплой
+
+Ubuntu VPS + Docker. Порты наружу не публикуются: бот сам ходит в Telegram,
+входящих соединений нет.
+
+Схема: push в `main` → GitHub Actions гоняет сборку, формат и тесты → собирает
+образ и кладёт в GHCR → на VPS `docker compose pull && docker compose up -d`.
+
+### Обычный деплой
 
 ```bash
-dotnet publish src/CockRealSizeBot.Bot -c Release -r linux-x64 --self-contained false -o publish
+ssh vps
+cd /opt/cockrealsizebot
+docker compose pull && docker compose up -d
+docker compose logs -f --tail 50
 ```
+
+### Откат
+
+Каждая сборка тегируется ещё и как `sha-<полный-хэш-коммита>`. Откат — это правка
+одной строки:
+
+```bash
+sed -i 's|:latest|:sha-<хэш>|' .env
+docker compose up -d
+```
+
+### Первая настройка VPS
+
+```bash
+mkdir -p /opt/cockrealsizebot && cd /opt/cockrealsizebot
+# положить сюда compose.yaml и .env.example из репозитория
+cp .env.example .env && chmod 600 .env && nano .env   # BOT_IMAGE, Bot__Token, Bot__Salt
+
+# Для приватного пакета в GHCR нужен PAT с правом read:packages.
+echo "<PAT>" | docker login ghcr.io -u <аккаунт> --password-stdin
+
+docker compose up -d
+```
+
+### Чего в контейнере нет и почему
+
+- **Хелсчека нет.** HTTP-эндпоинта у бота тоже нет, а проверять «жив ли процесс»
+  докер и так умеет. Необработанная ошибка опроса роняет хост целиком
+  (`BackgroundServiceExceptionBehavior.StopHost`), контейнер выходит,
+  `restart: unless-stopped` поднимает заново — это и есть механизм восстановления.
+- **Тестов в образе нет:** `tests/` исключён через `.dockerignore`, гоняет их CI.
+
+### Ловушка при смене базового образа
+
+`InvariantGlobalization` выключен, а граница суток считается по IANA-зоне.
+Образу нужны ICU **и** tzdata. В `mcr.microsoft.com/dotnet/runtime:10.0` (Ubuntu)
+оба есть из коробки — проверено. В chiseled и alpine их нет, там
+`FindSystemTimeZoneById` упадёт на старте.
 
 ---
 
@@ -195,5 +246,5 @@ Placeholder задаётся внутри диалога `/setinline` — сер
 
 - `/verify` — прогон всех проверок перед коммитом.
 - `/health-check` — оценка состояния проекта.
-- Не сделано и ждёт решения: Dockerfile / systemd-юнит для VPS, реакция на
-  `ChosenInlineResult` (статистика по отправленным карточкам).
+- Не сделано и ждёт решения: реакция на `ChosenInlineResult` (статистика по
+  отправленным карточкам), автодеплой по ssh из CI вместо ручного `compose pull`.

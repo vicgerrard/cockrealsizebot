@@ -1,0 +1,19 @@
+services:
+  bot:
+    image: ${BOT_IMAGE:?BOT_IMAGE не задан — впишите его в .env}
+    container_name: cockrealsizebot
+
+    # Апдейты бот забирает сам, входящих соединений нет — порты не публикуем.
+
+    # Необработанная ошибка опроса роняет хост целиком (StopHost по умолчанию),
+    # и контейнер выходит. Перезапуск здесь — штатный механизм восстановления.
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
