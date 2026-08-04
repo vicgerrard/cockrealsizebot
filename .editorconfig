@@ -18,13 +18,16 @@ indent_size = 4
 tab_width = 4
 
 # New line preferences
-insert_final_newline = false
+# Шаблон dotnet ставит false; переключено на true — файл без завершающего перевода
+# строки git показывает как "\ No newline at end of file" в каждом диффе.
+insert_final_newline = true
 
 #### .NET Coding Conventions ####
 [*.{cs,vb}]
 
 # Organize usings
-dotnet_separate_import_directive_groups = true
+# Пустые строки между группами using не ставим — сплошной отсортированный список.
+dotnet_separate_import_directive_groups = false
 dotnet_sort_system_directives_first = true
 file_header_template = unset
 

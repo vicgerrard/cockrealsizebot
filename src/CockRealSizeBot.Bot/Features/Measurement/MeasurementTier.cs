@@ -1,0 +1,123 @@
+using System.Diagnostics;
+
+namespace CockRealSizeBot.Bot.Features.Measurement;
+
+/// <summary>
+/// Разряд, в который попадает замер: звание, эмодзи-реакция и набор прозвищ,
+/// из которого детерминированно выбирается одно.
+/// </summary>
+internal sealed record MeasurementTier(
+    int MaxCentimeters,
+    string Rank,
+    string Emoji,
+    IReadOnlyList<string> Nicknames);
+
+internal static class MeasurementTiers
+{
+    /// <summary>Верхняя граница шкалы. Ниже — 1 см.</summary>
+    public const int MaxCentimeters = 35;
+
+    public const int MinCentimeters = 1;
+
+    /// <summary>
+    /// Разряды по возрастанию. Границы непрерывны: разряд подбирается по первому
+    /// <see cref="MeasurementTier.MaxCentimeters"/>, который не меньше результата.
+    /// </summary>
+    private static readonly MeasurementTier[] Ladder =
+    [
+        new(5, "Скрытый потенциал", "😒",
+        [
+            "Хоботок",
+            "Авторитет",
+            "Микрочип",
+            "Шпунтик",
+            "Полтора миллиметра надежды",
+            "Тихий омут",
+            "Скромное обаяние",
+            "Ювелирная работа",
+        ]),
+        new(10, "Экономкласс", "😔",
+        [
+            "Мизинчик",
+            "Юный натуралист",
+            "Карманный вариант",
+            "Компактная сборка",
+            "Бюджетный тариф",
+            "Походный набор",
+            "Ручная кладь",
+            "Пробная версия",
+        ]),
+        new(15, "Народный стандарт", "🙂",
+        [
+            "Средний по больнице",
+            "Рабочая лошадка",
+            "Классика жанра",
+            "Без претензий",
+            "Универсальный солдат",
+            "Народный автомобиль",
+            "Проверенный временем",
+            "Всё как у людей",
+        ]),
+        new(20, "Уверенный середняк", "😏",
+        [
+            "Питон в кустах",
+            "Джентльменский набор",
+            "Тот самый",
+            "Знает себе цену",
+            "Мужчина в расцвете сил",
+            "Про-версия",
+            "Первый парень на деревне",
+            "Комплимент от шефа",
+        ]),
+        new(25, "Тяжёлая артиллерия", "😯",
+        [
+            "Лоллипап",
+            "Лысый Джонни Синс",
+            "Анаконда",
+            "Гроза общежития",
+            "Кувалда",
+            "Бивень",
+            "Флагман",
+            "Главный калибр",
+        ]),
+        new(30, "Легенда района", "😱",
+        [
+            "Годзилла",
+            "Титан",
+            "Ричард Львиное Сердце",
+            "Третья нога",
+            "Небоскрёб",
+            "Крановщик",
+            "Достояние республики",
+            "Занесён в реестр",
+        ]),
+        new(MaxCentimeters, "Аномалия", "🐍",
+        [
+            "Нарушение законов физики",
+            "Секретная разработка",
+            "Внеземная цивилизация",
+            "Мировой рекорд",
+            "Лох-несское чудовище",
+            "Шлагбаум",
+            "Мачта",
+            "Требует отдельной визы",
+        ]),
+    ];
+
+    public static MeasurementTier For(int centimeters)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(centimeters, MinCentimeters);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(centimeters, MaxCentimeters);
+
+        foreach (var tier in Ladder)
+        {
+            if (centimeters <= tier.MaxCentimeters)
+            {
+                return tier;
+            }
+        }
+
+        // Недостижимо: последний разряд закрывает шкалу до MaxCentimeters.
+        throw new UnreachableException($"Нет разряда для {centimeters} см.");
+    }
+}

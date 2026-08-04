@@ -5,7 +5,12 @@
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <InvariantGlobalization>true</InvariantGlobalization>
+    <!--
+      InvariantGlobalization НЕ включаем: без ICU на Windows ломается
+      TimeZoneInfo.FindSystemTimeZoneById("Europe/Moscow") — IANA-идентификаторы
+      резолвятся только через ICU. А граница суток у нас считается по IANA-зоне.
+    -->
+    <InvariantGlobalization>false</InvariantGlobalization>
   </PropertyGroup>
 
   <PropertyGroup>

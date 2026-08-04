@@ -1,4 +1,7 @@
 using CockRealSizeBot.Bot.Configuration;
+using CockRealSizeBot.Bot.Features.Inline;
+using CockRealSizeBot.Bot.Features.Measurement;
+using CockRealSizeBot.Bot.Infrastructure.Polling;
 
 var builder = Host.CreateApplicationBuilder(args);
 
@@ -10,8 +13,10 @@ builder.Services
 
 builder.Services.AddSingleton(TimeProvider.System);
 
-// Фичи регистрируются здесь: клиент Telegram.Bot, long polling hosted service,
-// обработчики inline-запросов. См. CLAUDE.md → «Как добавлять фичи».
+builder.Services
+    .AddMeasurement()
+    .AddInlineMeasurement()
+    .AddTelegramBot();
 
 var host = builder.Build();
 host.Run();
