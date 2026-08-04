@@ -16,12 +16,13 @@ public sealed class MeasurementCardTests
     }
 
     [Fact]
-    public void Card_shows_the_rank_and_the_cooldown_hint()
+    public void Card_ends_on_the_rank()
     {
         var card = MeasurementCard.Render(new MeasureUser.Result(23, "Лоллипап", "Тяжёлая артиллерия", "😯"));
 
-        Assert.Contains("Звание: Тяжёлая артиллерия", card, StringComparison.Ordinal);
-        Assert.Contains("Следующий замер — завтра", card, StringComparison.Ordinal);
+        // Про кулдаун в карточке не пишем — она уходит в чат и живёт там вечно,
+        // а «завтра» через сутки станет враньём.
+        Assert.EndsWith("Звание: Тяжёлая артиллерия", card, StringComparison.Ordinal);
     }
 
     [Theory]

@@ -32,8 +32,7 @@ internal static class MeasurementCard
             .AppendLine(RenderRuler(result.Centimeters))
             .AppendLine()
             .Append("Звание: ")
-            .AppendLine(result.Rank)
-            .Append("Следующий замер — завтра");
+            .Append(result.Rank);
 
         return card.ToString();
     }

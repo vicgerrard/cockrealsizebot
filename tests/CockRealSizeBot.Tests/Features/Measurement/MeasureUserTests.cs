@@ -46,16 +46,19 @@ public sealed class MeasureUserTests
     {
         var handler = TestSubjects.Handler();
 
-        var usage = Enumerable.Range(1, 20_000)
+        // Самый населённый разряд — на нём выборка достаточна для оценки перекоса.
+        var tier = MeasurementTiers.For(18);
+
+        var usage = Enumerable.Range(1, 40_000)
             .Select(id => handler.Measure(new MeasureUser.Query(id)))
-            .Where(result => result.Rank == "Уверенный середняк")
+            .Where(result => result.Rank == tier.Rank)
             .GroupBy(result => result.Nickname)
             .Select(group => group.Count())
             .ToList();
 
         // Прозвище выбирается независимо от размера, поэтому внутри разряда
         // все варианты должны встречаться примерно одинаково часто.
-        Assert.Equal(8, usage.Count);
+        Assert.Equal(tier.Nicknames.Count, usage.Count);
         Assert.True(usage.Max() < usage.Min() * 1.5, $"Перекос прозвищ: от {usage.Min()} до {usage.Max()}");
     }
 
