@@ -79,6 +79,25 @@ public sealed class AnswerMeasurementQueryTests
     }
 
     [Fact]
+    public async Task Repeated_requests_of_one_user_rotate_the_nickname()
+    {
+        var (bot, handler, _) = Arrange();
+
+        foreach (var request in Enumerable.Range(1, 30))
+        {
+            await handler.HandleAsync(
+                InlineQueryFrom(UserId, queryId: $"query-{request}"),
+                TestContext.Current.CancellationToken);
+        }
+
+        var cards = bot.RequestsOf<AnswerInlineQueryRequest>().Select(CardOf).Distinct().ToList();
+
+        // Сантиметры внутри суток одни и те же, так что различаться карточки
+        // могут только прозвищем — и должны: id запроса участвует в выборе.
+        Assert.True(cards.Count > 1, "30 запросов подряд дали одну и ту же карточку — прозвище не меняется");
+    }
+
+    [Fact]
     public async Task Answer_echoes_the_id_of_the_incoming_query()
     {
         var (bot, handler, _) = Arrange();
@@ -97,12 +116,13 @@ public sealed class AnswerMeasurementQueryTests
         var measure = TestSubjects.Handler(TestSubjects.Clock());
         var handler = new AnswerMeasurementQuery(bot, measure, NullLogger<AnswerMeasurementQuery>.Instance);
 
-        return (bot, handler, measure.Measure(new MeasureUser.Query(UserId)));
+        // Тот же id, что у InlineQueryFrom: прозвище зависит от id запроса.
+        return (bot, handler, measure.Measure(new MeasureUser.Query(UserId, "query-1")));
     }
 
-    private static TelegramInlineQuery InlineQueryFrom(long userId, string query = "") => new()
+    private static TelegramInlineQuery InlineQueryFrom(long userId, string query = "", string queryId = "query-1") => new()
     {
-        Id = "query-1",
+        Id = queryId,
         From = new User { Id = userId, FirstName = "Тестовый" },
         Query = query,
     };

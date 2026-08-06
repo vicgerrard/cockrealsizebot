@@ -6,19 +6,41 @@ public sealed class MeasureUserTests
 {
     private const long UserId = 777_000_111;
 
+    /// <summary>Запрос по умолчанию — для тестов, которым важен пользователь, а не запрос.</summary>
+    private const string RequestId = "query-1";
+
     [Fact]
-    public void Same_user_on_same_day_always_gets_the_same_result()
+    public void Same_user_on_same_day_always_gets_the_same_centimeters()
     {
         var clock = TestSubjects.Clock();
         var handler = TestSubjects.Handler(clock);
 
-        var morning = handler.Measure(new MeasureUser.Query(UserId));
+        var morning = handler.Measure(new MeasureUser.Query(UserId, "morning-query"));
 
         // Двигаемся внутри тех же суток по МСК: 09:00 UTC → 20:00 UTC = 12:00 → 23:00 МСК.
         clock.Advance(TimeSpan.FromHours(11));
-        var evening = handler.Measure(new MeasureUser.Query(UserId));
+        var evening = handler.Measure(new MeasureUser.Query(UserId, "evening-query"));
 
-        Assert.Equal(morning, evening);
+        // Прозвище от запроса меняется, а сантиметры (и с ними разряд) — суточные.
+        Assert.Equal(morning.Centimeters, evening.Centimeters);
+        Assert.Equal(morning.Rank, evening.Rank);
+    }
+
+    [Fact]
+    public void Nickname_changes_between_requests_within_the_same_day()
+    {
+        var handler = TestSubjects.Handler();
+
+        var results = Enumerable.Range(1, 500)
+            .Select(request => handler.Measure(new MeasureUser.Query(UserId, $"query-{request}")))
+            .ToList();
+
+        // Сантиметры от запроса не зависят вовсе.
+        Assert.Single(results.Select(result => result.Centimeters).Distinct());
+
+        // А прозвища за 500 запросов должны выпасть все, что есть в разряде.
+        var tier = MeasurementTiers.For(results[0].Centimeters);
+        Assert.Equal(tier.Nicknames.Count, results.Select(result => result.Nickname).Distinct().Count());
     }
 
     [Fact]
@@ -50,7 +72,7 @@ public sealed class MeasureUserTests
         var tier = MeasurementTiers.For(18);
 
         var usage = Enumerable.Range(1, 40_000)
-            .Select(id => handler.Measure(new MeasureUser.Query(id)))
+            .Select(id => handler.Measure(new MeasureUser.Query(id, RequestId)))
             .Where(result => result.Rank == tier.Rank)
             .GroupBy(result => result.Nickname)
             .Select(group => group.Count())
@@ -63,7 +85,7 @@ public sealed class MeasureUserTests
     }
 
     private static List<int> MeasureEveryone(MeasureUser.Handler handler) =>
-        [.. Enumerable.Range(1, 100).Select(id => handler.Measure(new MeasureUser.Query(id)).Centimeters)];
+        [.. Enumerable.Range(1, 100).Select(id => handler.Measure(new MeasureUser.Query(id, RequestId)).Centimeters)];
 
     [Fact]
     public void Different_users_get_independent_results()
@@ -71,7 +93,7 @@ public sealed class MeasureUserTests
         var handler = TestSubjects.Handler();
 
         var results = Enumerable.Range(1, 200)
-            .Select(id => handler.Measure(new MeasureUser.Query(id)).Centimeters)
+            .Select(id => handler.Measure(new MeasureUser.Query(id, RequestId)).Centimeters)
             .Distinct()
             .ToList();
 
@@ -88,8 +110,8 @@ public sealed class MeasureUserTests
         var reshuffled = TestSubjects.Handler(clock, salt: "совершенно-другая-соль");
 
         var changed = Enumerable.Range(1, 100)
-            .Count(id => original.Measure(new MeasureUser.Query(id)).Centimeters
-                      != reshuffled.Measure(new MeasureUser.Query(id)).Centimeters);
+            .Count(id => original.Measure(new MeasureUser.Query(id, RequestId)).Centimeters
+                      != reshuffled.Measure(new MeasureUser.Query(id, RequestId)).Centimeters);
 
         Assert.True(changed > 80, $"Смена соли изменила лишь {changed} результатов из 100");
     }
@@ -101,7 +123,7 @@ public sealed class MeasureUserTests
 
         foreach (var id in Enumerable.Range(1, 5_000))
         {
-            var result = handler.Measure(new MeasureUser.Query(id));
+            var result = handler.Measure(new MeasureUser.Query(id, RequestId));
 
             Assert.InRange(result.Centimeters, MeasurementTiers.MinCentimeters, MeasurementTiers.MaxCentimeters);
         }
@@ -113,7 +135,7 @@ public sealed class MeasureUserTests
         var handler = TestSubjects.Handler();
 
         var values = Enumerable.Range(1, 10_000)
-            .Select(id => handler.Measure(new MeasureUser.Query(id)).Centimeters)
+            .Select(id => handler.Measure(new MeasureUser.Query(id, RequestId)).Centimeters)
             .ToList();
 
         var middle = values.Count(cm => cm is >= 13 and <= 23);
@@ -131,7 +153,7 @@ public sealed class MeasureUserTests
 
         foreach (var id in Enumerable.Range(1, 1_000))
         {
-            var result = handler.Measure(new MeasureUser.Query(id));
+            var result = handler.Measure(new MeasureUser.Query(id, RequestId));
             var tier = MeasurementTiers.For(result.Centimeters);
 
             Assert.Equal(tier.Rank, result.Rank);

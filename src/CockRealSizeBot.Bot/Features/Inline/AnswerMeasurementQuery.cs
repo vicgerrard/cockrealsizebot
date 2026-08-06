@@ -22,7 +22,7 @@ internal sealed partial class AnswerMeasurementQuery(
 
     public async Task HandleAsync(TelegramInlineQuery query, CancellationToken cancellationToken)
     {
-        var result = measure.Measure(new MeasureUser.Query(query.From.Id));
+        var result = measure.Measure(new MeasureUser.Query(query.From.Id, query.Id));
 
         var article = new InlineQueryResultArticle(
             id: ResultId,
