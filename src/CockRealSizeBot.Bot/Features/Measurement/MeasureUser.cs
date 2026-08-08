@@ -35,21 +35,15 @@ public static class MeasureUser
         }
 
         /// <summary>
-        /// Среднее трёх независимых равномерных величин — приближение нормального
-        /// распределения (центральная предельная теорема на минималках). Середина
-        /// шкалы выпадает часто, края — редко и оттого смешно.
+        /// Равномерное распределение по всей шкале: у каждого значения от 1 до 35
+        /// одинаковый шанс, края выпадают не реже середины.
         /// </summary>
         private static int ToCentimeters(DeterministicEntropy entropy)
         {
-            var bell =
-                (DeterministicEntropy.ToUnitInterval(entropy.First)
-                 + DeterministicEntropy.ToUnitInterval(entropy.Second)
-                 + DeterministicEntropy.ToUnitInterval(entropy.Third)) / 3.0;
-
             const int span = MeasurementTiers.MaxCentimeters - MeasurementTiers.MinCentimeters + 1;
 
-            // bell строго меньше 1, поэтому offset не выйдет за span - 1.
-            var offset = (int)(bell * span);
+            // ToUnitInterval строго меньше 1, поэтому offset не выйдет за span - 1.
+            var offset = (int)(DeterministicEntropy.ToUnitInterval(entropy.First) * span);
 
             return MeasurementTiers.MinCentimeters + Math.Min(offset, span - 1);
         }

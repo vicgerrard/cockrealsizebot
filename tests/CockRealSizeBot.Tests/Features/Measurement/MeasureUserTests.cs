@@ -130,20 +130,27 @@ public sealed class MeasureUserTests
     }
 
     [Fact]
-    public void Distribution_is_bell_shaped_not_uniform()
+    public void Distribution_is_uniform_across_the_whole_scale()
     {
         var handler = TestSubjects.Handler();
 
-        var values = Enumerable.Range(1, 10_000)
+        var values = Enumerable.Range(1, 35_000)
             .Select(id => handler.Measure(new MeasureUser.Query(id, RequestId)).Centimeters)
             .ToList();
 
-        var middle = values.Count(cm => cm is >= 13 and <= 23);
-        var edges = values.Count(cm => cm is <= 5 or >= 31);
+        var byValue = values.GroupBy(cm => cm).ToDictionary(group => group.Key, group => group.Count());
 
-        // При равномерном распределении середина дала бы ~31%, края ~14%.
-        Assert.True(middle > values.Count * 0.55, $"Середина шкалы недобрала: {middle} из {values.Count}");
-        Assert.True(edges < values.Count * 0.05, $"Края шкалы выпадают слишком часто: {edges} из {values.Count}");
+        // Каждое значение шкалы должно встречаться, и примерно одинаково часто:
+        // при колоколе края недобирали бы на порядок.
+        const int span = MeasurementTiers.MaxCentimeters - MeasurementTiers.MinCentimeters + 1;
+        Assert.Equal(span, byValue.Count);
+
+        var expected = values.Count / (double)span;
+        var least = byValue.Values.Min();
+        var most = byValue.Values.Max();
+
+        Assert.True(least > expected * 0.8, $"Значение выпадает слишком редко: {least} при ожидаемых {expected:F0}");
+        Assert.True(most < expected * 1.2, $"Значение выпадает слишком часто: {most} при ожидаемых {expected:F0}");
     }
 
     [Fact]
